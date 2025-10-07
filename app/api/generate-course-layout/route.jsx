@@ -1,6 +1,6 @@
 import dotenv from 'dotenv';
 import { GoogleGenAI } from "@google/genai";
-import { auth } from '@clerk/nextjs';
+import { auth } from '@clerk/nextjs/server';
 
 dotenv.config();
 
