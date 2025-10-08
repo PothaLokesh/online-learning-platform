@@ -9,6 +9,7 @@ import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import axios from 'axios';
 import Link from 'next/link';
+import {toast} from 'sonner';
 function CourseInfo({course,viewCourse}) {
     // Handle both nested and flat course structure
     const courseLayout = course?.courseJson?.course

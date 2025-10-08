@@ -1,7 +1,7 @@
 import dotenv from 'dotenv';
 import { GoogleGenAI } from "@google/genai";
 import { auth } from '@clerk/nextjs/server';
-
+import  { eq } from 'drizzle-orm';
 dotenv.config();
 
 import { NextResponse } from 'next/server';
@@ -45,7 +45,7 @@ export async function POST(req){
 
       if(!hasPremiumAccess){
         const result=await db.select().from(coursesTable).where(eq(coursesTable.userEmail,user?.primaryEmailAddress?.emailAddress));
-         if(result?.length>=1){
+         if(result?.length>=7){
             return NextResponse.json({'resp':'limit exceeded'})
          }
 
