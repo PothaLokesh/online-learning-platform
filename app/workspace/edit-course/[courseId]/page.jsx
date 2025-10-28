@@ -4,11 +4,11 @@ import {useParams} from  'next/navigation'
 import axios from 'axios';
 import { useState,useEffect } from 'react';
 import CourseInfo from '../_components/CourseInfo';
-import ChapterTopicList from '../_components/ChapterTopicList'
+import ChapterTopicList from '../_components/ChapterTopicList';
 function EditCourse({viewCourse=false}) {
     const {courseId}=useParams();
     const [loading,setLoading]=useState(false);
-    const [course,setCourse]=useState();
+    const [course,setCourse]=useState(null);
 
     useEffect(()=>{
         if(courseId){
@@ -29,8 +29,16 @@ function EditCourse({viewCourse=false}) {
     }
   return (
     <div>
-        <CourseInfo course={course} viewCourse={viewCourse}/>
-        <ChapterTopicList course={course}/>
+        {loading ? (
+            <div className="flex justify-center items-center h-64">
+                <div className="text-lg">Loading course...</div>
+            </div>
+        ) : (
+            <>
+                <CourseInfo course={course} viewCourse={viewCourse}/>
+                <ChapterTopicList course={course}/>
+            </>
+        )}
     </div>
   )
 }

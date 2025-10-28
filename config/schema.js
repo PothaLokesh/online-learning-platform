@@ -21,9 +21,9 @@ export const coursesTable=pgTable("courses",{
   courseJson:json(),
   bannerImageUrl:varchar().default(''),
   courseContent:json().default({}),
+  embedding:json(), // Vector embeddings for RAG chatbot
   userEmail:varchar('userEmail').references(()=>usersTable.email)
 })
-
 
 export const enrollCourseTable=pgTable('enrollCourse',{
   id:integer().primaryKey().generatedAlwaysAsIdentity(),
