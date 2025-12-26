@@ -53,8 +53,8 @@ export async function PUT(request) {
         // Trigger embeddings ingestion
         await chatbotInstance.ingestContentEmbeddings();
 
-        return NextResponse.json({ 
-            message: "Embeddings ingestion triggered successfully." 
+        return NextResponse.json({
+            message: "Embeddings ingestion triggered successfully."
         });
     } catch (error) {
         console.error("Error in embeddings ingestion:", error);
