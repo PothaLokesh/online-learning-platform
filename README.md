@@ -1,36 +1,104 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+# Online Learning Platform with RAG Chatbot
 
-## Getting Started
+![Project Banner](https://via.placeholder.com/1200x300?text=Online+Learning+Platform+with+AI+Assistant)
 
-First, run the development server:
+## 🚀 Unique Properties
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+This is not just another learning platform. It distinguishes itself with advanced **AI integration** designed to enhance the student learning experience:
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+*   **🧠 Intelligent RAG Chatbot**: Built-in AI assistant that uses **Retrieval Augmented Generation (RAG)** to answer student questions based *strictly* on the course content. It doesn't hallucinate; it "reads" the course material to give accurate answers.
+*   **💎 Google Gemini Powered**: Leverages Google's state-of-the-art **Gemini Flash (`gemini-flash-latest`)** for fast, natural language understanding and generation.
+*   **🔎 Vector Search with pgvector**: Utilizes **PostgreSQL with `pgvector`** to perform semantic searches on course content. It understands the *meaning* of a question, not just keyword matching.
+*   **🔄 Automatic Embeddings Pipeline**: Includes a system to automatically generate and update vector embeddings using **`text-embedding-004`** whenever course content is updated.
+*   **📅 Smart Context Awareness**: The AI retrieves specific course sections, code snippets, and lessons relevant to the user's query to provide precise, context-aware help.
 
-You can start editing the page by modifying `app/page.js`. The page auto-updates as you edit the file.
+---
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## 📖 Project Overview
 
-## Learn More
+This is a full-stack Online Learning Platform designed to provide an interactive and supported learning environment. Beyond standard features like course listings and progress tracking, it embeds a powerful AI tutor that helps students clarify doubts instantly without leaving the platform.
 
-To learn more about Next.js, take a look at the following resources:
+## ✨ Key Features
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+-   **Interactive AI Tutor**: A floating chatbot widget available on course pages.
+-   **Course Management**: efficiently organize and display learning materials.
+-   **Semantic Search**: Find relevant lessons by asking natural language questions.
+-   **Modern UI/UX**: Built with a responsive design for desktop and mobile learning.
+-   **Secure Database**: Robust data handling with PostgreSQL.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## 🛠️ Tech Stack
 
-## Deploy on Vercel
+*   **Frontend**: Next.js (App Router), React, Tailwind CSS
+*   **Backend**: Next.js API Routes (Serverless)
+*   **Database**: PostgreSQL (with `pgvector` extension)
+*   **AI/ML**: Google Generative AI (Gemini), LangChain (concepts used for RAG logic)
+*   **Driver**: `pg` (node-postgres)
+*   **Embeddings**: `text-embedding-004`
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## 🚀 Getting Started
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Follow these steps to set up the project locally.
+
+### Prerequisites
+
+*   Node.js (v18+)
+*   PostgreSQL database (local or cloud like Neon/Supabase)
+*   Google Cloud API Key (with Gemini API access)
+
+### Installation
+
+1.  **Clone the repository:**
+    ```bash
+    git clone https://github.com/yourusername/online-learning-platform.git
+    cd online-learning-platform
+    ```
+
+2.  **Install dependencies:**
+    ```bash
+    npm install
+    ```
+
+3.  **Set up Environment Variables:**
+    Create a `.env` file in the root directory and add the following keys:
+    ```env
+    # Database Connection
+    DATABASE_URL="postgresql://user:password@host:port/database?sslmode=require"
+
+    # Google Gemini API
+    GOOGLE_API_KEY="your_google_api_key_here"
+    # or
+    GEMINI_API_KEY="your_google_api_key_here"
+    ```
+
+4.  **Initialize Database:**
+    Ensure your PostgreSQL database has the `vector` extension enabled. The project attempts to create it automatically, but you can run:
+    ```sql
+    CREATE EXTENSION IF NOT EXISTS vector;
+    ```
+
+5.  **Run the Development Server:**
+    ```bash
+    npm run dev
+    ```
+
+6.  **Open the App:**
+    Visit `http://localhost:3000` in your browser.
+
+## 🧠 AI Embeddings Setup
+
+To make the chatbot work, you need to generate embeddings for your course content.
+
+1.  Populate your database with courses.
+2.  Trigger the embedding generation endpoint (e.g., via a simplified UI button or curl command if configured):
+    ```bash
+    curl -X PUT http://localhost:3000/api/chatbot
+    ```
+    *This acts as a manual trigger to ingest and vectorize course content.*
+
+## 🤝 Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+## 📄 License
+
+This project is open-source and available under the [MIT License](LICENSE).
