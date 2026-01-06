@@ -14,12 +14,12 @@ const nextConfig = {
     ],
   },
   // Enable source maps for debugging
-  webpack: (config, { dev, isServer }) => {
-    if (dev && isServer) {
-      config.devtool = 'source-map';
-    }
-    return config;
-  },
+  // webpack: (config, { dev, isServer }) => {
+  //   if (dev && isServer) {
+  //     config.devtool = 'source-map';
+  //   }
+  //   return config;
+  // },
 };
 
 export default nextConfig;
