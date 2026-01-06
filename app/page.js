@@ -35,7 +35,7 @@ export default function Home() {
 
         <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
           <a
-            href="/dashboard"
+            href="/workspace"
             className="group bg-blue-600 text-white px-8 py-4 rounded-xl font-bold text-lg hover:bg-blue-700 transition-all duration-300 shadow-lg hover:shadow-blue-500/25 flex items-center gap-2 transform hover:-translate-y-1"
           >
             Start Learning Free
