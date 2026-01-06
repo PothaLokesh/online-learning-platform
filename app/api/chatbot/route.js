@@ -20,7 +20,7 @@ async function initializeChatbot() {
 
 export async function POST(request) {
     try {
-        const { question } = await request.json();
+        const { question, history } = await request.json();
 
         if (!question) {
             return NextResponse.json(
@@ -33,7 +33,7 @@ export async function POST(request) {
         const chatbotInstance = await initializeChatbot();
 
         // Get response from chatbot
-        const response = await chatbotInstance.chat(question);
+        const response = await chatbotInstance.chat(question, history);
 
         return NextResponse.json({ answer: response });
     } catch (error) {

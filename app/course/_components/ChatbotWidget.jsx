@@ -4,6 +4,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { MessageCircle, Send, Loader2, X, Bot } from 'lucide-react';
 import axios from 'axios';
 import { toast } from 'sonner';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
 function ChatbotWidget({ courseId, isMobile = false, onClose }) {
     const [question, setQuestion] = useState('');
@@ -16,8 +18,16 @@ function ChatbotWidget({ courseId, isMobile = false, onClose }) {
 
         setIsLoading(true);
         try {
+            // Format history for Gemini
+            // Expected format: [{ role: "user", parts: [{ text: "..." }] }, { role: "model", parts: [{ text: "..." }] }]
+            const history = chatHistory.flatMap(chat => [
+                { role: "user", parts: [{ text: chat.question }] },
+                { role: "model", parts: [{ text: chat.answer }] }
+            ]);
+
             const response = await axios.post('/api/chatbot', {
-                question: question.trim()
+                question: question.trim(),
+                history: history
             });
 
             const newChat = {
@@ -102,7 +112,7 @@ function ChatbotWidget({ courseId, isMobile = false, onClose }) {
                                     <p className="text-xs opacity-70 mt-1">{chat.timestamp}</p>
                                 </div>
                             </div>
-                            
+
                             {/* Assistant Response */}
                             <div className="flex justify-start">
                                 <div className="bg-muted p-3 rounded-lg max-w-[80%]">
@@ -110,12 +120,40 @@ function ChatbotWidget({ courseId, isMobile = false, onClose }) {
                                         <Bot className="w-4 h-4 text-primary" />
                                         <p className="text-sm font-medium">Assistant</p>
                                     </div>
-                                    <div 
-                                        className="text-sm prose prose-sm max-w-none"
-                                        dangerouslySetInnerHTML={{ 
-                                            __html: chat.answer.replace(/\n/g, '<br>') 
-                                        }}
-                                    />
+                                    <div className="text-sm prose prose-sm max-w-none prose-p:mb-2 prose-ul:my-2 prose-li:my-0.5">
+                                        <ReactMarkdown
+                                            remarkPlugins={[remarkGfm]}
+                                            components={{
+                                                strong: ({ node, ...props }) => (
+                                                    <span className="font-semibold text-primary bg-primary/10 px-1 py-0.5 rounded text-[0.9em]" {...props} />
+                                                ),
+                                                ul: ({ node, ...props }) => (
+                                                    <ul className="list-disc pl-4 space-y-1" {...props} />
+                                                ),
+                                                ol: ({ node, ...props }) => (
+                                                    <ol className="list-decimal pl-4 space-y-1" {...props} />
+                                                ),
+                                                a: ({ node, ...props }) => (
+                                                    <a className="text-primary underline underline-offset-2 hover:text-primary/80" target="_blank" rel="noopener noreferrer" {...props} />
+                                                ),
+                                                code: ({ node, inline, className, children, ...props }) => {
+                                                    return inline ? (
+                                                        <code className="bg-muted px-1 py-0.5 rounded font-mono text-[0.9em]" {...props}>
+                                                            {children}
+                                                        </code>
+                                                    ) : (
+                                                        <div className="bg-muted/50 p-3 rounded-lg my-2 overflow-x-auto">
+                                                            <code className="font-mono text-xs block" {...props}>
+                                                                {children}
+                                                            </code>
+                                                        </div>
+                                                    );
+                                                }
+                                            }}
+                                        >
+                                            {chat.answer}
+                                        </ReactMarkdown>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -162,7 +200,7 @@ function ChatbotWidget({ courseId, isMobile = false, onClose }) {
                         </Button>
                     </div>
                 </form>
-                
+
                 {/* Quick Question Suggestions */}
                 {chatHistory.length === 0 && (
                     <div className="mt-4 space-y-2">
