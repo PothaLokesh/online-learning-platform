@@ -32,7 +32,7 @@ const Header = () => {
 
                     <SignedIn>
                         <a
-                            href="/dashboard"
+                            href="/workspace"
                             className="text-sm font-medium text-gray-600 hover:text-blue-600 transition-colors mr-4 hidden md:block"
                         >
                             Dashboard

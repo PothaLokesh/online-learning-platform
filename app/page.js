@@ -115,7 +115,7 @@ export default function Home() {
               ))}
             </ul>
             <a
-              href="/dashboard"
+              href="/workspace"
               className="inline-block mt-4 text-blue-600 font-bold hover:text-blue-800 transition-colors"
             >
               Start building your skills &rarr;
