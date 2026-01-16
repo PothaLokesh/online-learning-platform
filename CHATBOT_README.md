@@ -1,4 +1,5 @@
 # RAG Chatbot Integration for Online Learning Platform
+<!-- backend and chatbot updation -->
 
 This integration adds a RAG (Retrieval-Augmented Generation) chatbot to your online learning platform using Google's Gemini AI and PostgreSQL with pgvector for vector embeddings.
 

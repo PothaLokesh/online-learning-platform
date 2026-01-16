@@ -1,4 +1,5 @@
 -- Manual migration to fix foreign key constraint issue
+-- backend and chatbot updation
 -- Run this SQL directly in your database
 
 -- First, drop the existing foreign key constraint if it exists
