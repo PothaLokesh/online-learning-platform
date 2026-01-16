@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-// Setup script to initialize the chatbot system
+// backend and chatbot updation
 require('dotenv').config();
 
 const { Pool } = require('pg');
@@ -14,44 +14,44 @@ async function setupDatabase() {
     });
 
     try {
-        console.log('Setting up database for chatbot...');
-        
-        // Check if pgvector extension exists
+        console.log('backend and chatbot updation');
+
+        // backend and chatbot updation
         const client = await pool.connect();
-        
+
         try {
-            // Enable pgvector extension
+            // backend and chatbot updation
             await client.query("CREATE EXTENSION IF NOT EXISTS vector;");
-            console.log('✓ pgvector extension enabled');
-            
-            // Add embedding column if it doesn't exist
+            console.log('backend and chatbot updation');
+
+            // backend and chatbot updation
             await client.query(`
                 ALTER TABLE courses 
                 ADD COLUMN IF NOT EXISTS embedding vector(768);
             `);
-            console.log('✓ embedding column added to courses table');
-            
-            // Create index for vector similarity search
+            console.log('backend and chatbot updation');
+
+            // backend and chatbot updation
             await client.query(`
                 CREATE INDEX IF NOT EXISTS courses_embedding_idx 
                 ON courses USING ivfflat (embedding vector_cosine_ops) 
                 WITH (lists = 100);
             `);
-            console.log('✓ vector similarity index created');
-            
+            console.log('backend and chatbot updation');
+
         } finally {
             client.release();
         }
-        
-        console.log('Database setup completed successfully!');
-        
+
+        console.log('backend and chatbot updation');
+
     } catch (error) {
-        console.error('Error setting up database:', error);
+        console.error('backend and chatbot updation', error);
         process.exit(1);
     } finally {
         await pool.end();
     }
 }
 
-// Run the setup
+// backend and chatbot updation
 setupDatabase().catch(console.error);

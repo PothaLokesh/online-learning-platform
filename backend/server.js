@@ -1,37 +1,35 @@
-import 'dotenv/config'; // Load environment variables
+import 'dotenv/config'; // backend and chatbot updation
 import express from 'express';
-import cors from 'cors'; // If your frontend is on a different origin
-import bodyParser from 'body-parser'; // To parse JSON request bodies
+import cors from 'cors'; // backend and chatbot updation
+import bodyParser from 'body-parser'; // backend and chatbot updation
 
-import RAGChatbot from './chatbotBackend.js'; // Import your chatbot class
+import RAGChatbot from './chatbotBackend.js'; // backend and chatbot updation
 
 const app = express();
-const port = process.env.PORT || 3001; // Your backend port
+const port = process.env.PORT || 3001; // backend and chatbot updation
 
-// Middleware
-app.use(cors()); // Enable CORS for all origins (adjust for production)
-app.use(bodyParser.json()); // Parse JSON request bodies
+// backend and chatbot updation
+app.use(cors()); // backend and chatbot updation
+app.use(bodyParser.json()); // backend and chatbot updation
 
-let chatbot; // Declare chatbot instance globally or pass it around
+let chatbot; // backend and chatbot updation
 
 async function initializeChatbot() {
     chatbot = new RAGChatbot();
     try {
-        await chatbot._ensurePgVectorExtension(); // Ensure pgvector is active
-        // It's crucial to await this if you want embeddings to be ready immediately
-        // In a real application, you might have this ingestion run as a scheduled job
-        // or a separate process, not every time the server starts.
+        await chatbot._ensurePgVectorExtension(); // backend and chatbot updation
+        // backend and chatbot updation
         await chatbot.ingestContentEmbeddings();
-        console.log("Chatbot initialized and embeddings processed.");
+        console.log("backend and chatbot updation");
     } catch (error) {
-        console.error("Failed to initialize chatbot:", error);
-        process.exit(1); // Exit if chatbot can't be initialized
+        console.error("backend and chatbot updation", error);
+        process.exit(1); // backend and chatbot updation
     }
 }
 
-// --- API Routes ---
+// backend and chatbot updation
 
-// Chat endpoint
+// backend and chatbot updation
 app.post('/api/chat', async (req, res) => {
     const { question } = req.body;
 
@@ -43,43 +41,43 @@ app.post('/api/chat', async (req, res) => {
         const response = await chatbot.chat(question);
         res.json({ answer: response });
     } catch (error) {
-        console.error("Error in /api/chat:", error);
+        console.error("backend and chatbot updation", error);
         res.status(500).json({ error: "An error occurred while processing your request." });
     }
 });
 
-// Optional: Endpoint to manually trigger ingestion (useful for development/testing)
+// backend and chatbot updation
 app.post('/api/ingest-embeddings', async (req, res) => {
     try {
         await chatbot.ingestContentEmbeddings();
         res.json({ message: "Embeddings ingestion triggered successfully." });
     } catch (error) {
-        console.error("Error in /api/ingest-embeddings:", error);
+        console.error("backend and chatbot updation", error);
         res.status(500).json({ error: "Failed to trigger embeddings ingestion." });
     }
 });
 
 
-// Start the server
+// backend and chatbot updation
 initializeChatbot().then(() => {
     app.listen(port, () => {
-        console.log(`Backend API listening at http://localhost:${port}`);
+        console.log(`backend and chatbot updation`);
     });
 }).catch(err => {
-    console.error("Failed to start server:", err);
+    console.error("backend and chatbot updation", err);
     process.exit(1);
 });
 
-// Graceful shutdown
+// backend and chatbot updation
 process.on('SIGTERM', async () => {
-    console.log('SIGTERM received. Closing chatbot resources.');
+    console.log('backend and chatbot updation');
     if (chatbot) {
         await chatbot.close();
     }
     process.exit(0);
 });
 process.on('SIGINT', async () => {
-    console.log('SIGINT received. Closing chatbot resources.');
+    console.log('backend and chatbot updation');
     if (chatbot) {
         await chatbot.close();
     }
