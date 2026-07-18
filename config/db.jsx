@@ -1,5 +1,11 @@
-import { neon } from '@neondatabase/serverless';
-import { drizzle } from 'drizzle-orm/neon-http';
+import { Pool } from 'pg';
+import { drizzle } from 'drizzle-orm/node-postgres';
 
-const pg = neon(process.env.DATABASE_URL);
-export const db = drizzle({ client: pg });
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: {
+    rejectUnauthorized: false
+  }
+});
+
+export const db = drizzle({ client: pool });

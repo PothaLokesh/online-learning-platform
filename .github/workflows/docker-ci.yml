@@ -1,0 +1,52 @@
+name: Docker Build CI
+
+on:
+  push:
+    branches: [ "main", "master" ]
+  pull_request:
+    branches: [ "main", "master" ]
+
+jobs:
+  build-backend:
+    name: Build & Verify Backend
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build Backend Docker Image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./backend
+          file: ./backend/Dockerfile
+          push: false # Do not push to registry during CI check
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  build-frontend:
+    name: Build & Verify Frontend
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build Frontend Docker Image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile
+          push: false # Do not push to registry during CI check
+          # Pass dummy environment variables so Next.js can compile successfully during CI
+          build-args: |
+            NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_test_mock
+            NEXT_PUBLIC_DATABASE_URL=postgresql://mock:mock@localhost:5432/mock
+          cache-from: type=gha
+          cache-to: type=gha,mode=max

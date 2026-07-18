@@ -16,15 +16,42 @@ if (!DATABASE_URL) {
     process.exit(1);
 }
 
-const GENERATION_MODEL_NAME = "gemini-pro";
-const EMBEDDING_MODEL_NAME = "text-embedding-004";
+const GENERATION_MODEL_NAME = "gemini-flash-latest";
+const EMBEDDING_MODEL_NAME = "gemini-embedding-2";
 const EMBEDDING_DIMENSIONS = 768;
 
-// Define the table and column names from your Drizzle schema
 const COURSE_TABLE_NAME = "courses";
-const COURSE_ID_COLUMN = "cid";       // Use 'cid' as the identifier
-const COURSE_TEXT_COLUMN = "courseContent"; // Assuming 'courseContent' is your primary text source
+const COURSE_ID_COLUMN = "cid";
+const COURSE_TEXT_COLUMN = "courseContent";
 const COURSE_EMBEDDING_COLUMN = "embedding";
+
+function extractTextFromCourseContent(courseContentJson) {
+    if (!courseContentJson) return '';
+    if (typeof courseContentJson === 'string') {
+        try {
+            const parsed = JSON.parse(courseContentJson);
+            return extractTextFromCourseContent(parsed);
+        } catch {
+            return courseContentJson;
+        }
+    }
+    if (Array.isArray(courseContentJson)) {
+        return courseContentJson.map(chapter => {
+            const chapterName = chapter?.courseData?.chapterName || '';
+            const topicsText = Array.isArray(chapter?.courseData?.topics) 
+                ? chapter.courseData.topics.map(t => `${t.topic}\n${t.content || ''}`).join('\n')
+                : '';
+            return `${chapterName}\n${topicsText}`;
+        }).join('\n\n');
+    }
+    if (typeof courseContentJson === 'object') {
+        if (courseContentJson.sections && Array.isArray(courseContentJson.sections)) {
+            return courseContentJson.sections.map(s => s.text || '').join(' ');
+        }
+        return JSON.stringify(courseContentJson);
+    }
+    return '';
+}
 
 class RAGChatbot {
     constructor() { // Removed contentData from constructor, will fetch from DB
@@ -68,7 +95,10 @@ class RAGChatbot {
             return new Array(EMBEDDING_DIMENSIONS).fill(0);
         }
         try {
-            const result = await this.embeddingModel.embedContent({ content: text });
+            const result = await this.embeddingModel.embedContent({
+                content: { parts: [{ text: text }] },
+                outputDimensionality: EMBEDDING_DIMENSIONS
+            });
             if (result.embedding.values.length !== EMBEDDING_DIMENSIONS) {
                 console.warn(`Embedding dimensions mismatch! Expected ${EMBEDDING_DIMENSIONS}, got ${result.embedding.values.length}.`);
             }
@@ -76,6 +106,22 @@ class RAGChatbot {
         } catch (error) {
             console.error("Error generating embedding:", error);
             throw error;
+        }
+    }
+
+    async _getEmbeddingWithRetry(text, retries = 5, delay = 2000) {
+        for (let i = 0; i < retries; i++) {
+            try {
+                return await this._getEmbedding(text);
+            } catch (error) {
+                if (error.status === 429 && i < retries - 1) {
+                    const waitTime = delay * Math.pow(2, i);
+                    console.warn(`429 Rate Limit hit. Retrying in ${waitTime}ms (Attempt ${i + 1}/${retries})...`);
+                    await new Promise(resolve => setTimeout(resolve, waitTime));
+                } else {
+                    throw error;
+                }
+            }
         }
     }
 
@@ -88,42 +134,33 @@ class RAGChatbot {
             // Select all courses that don't have an embedding or whose content might have changed
             // For simplicity, we'll process all for now. In production, add a flag or timestamp.
             const coursesToProcess = await client.query(
-                `SELECT ${COURSE_ID_COLUMN}, ${COURSE_TEXT_COLUMN} FROM ${COURSE_TABLE_NAME};`
+                `SELECT "${COURSE_ID_COLUMN}", "${COURSE_TEXT_COLUMN}" FROM "${COURSE_TABLE_NAME}";`
             );
 
             console.log(`Found ${coursesToProcess.rows.length} courses to process.`);
 
             for (const row of coursesToProcess.rows) {
                 const courseId = row[COURSE_ID_COLUMN];
-                let contentText = '';
-
-                // Handle JSON/JSONB column: Extract relevant text from the structure
-                // This part is crucial and depends on the actual structure of your courseContent JSON
-                if (row[COURSE_TEXT_COLUMN]) {
-                    // Assuming courseContent is an object with a 'sections' array,
-                    // and each section has a 'text' property. Adjust as needed.
-                    const courseContentJson = row[COURSE_TEXT_COLUMN];
-                    if (courseContentJson.sections && Array.isArray(courseContentJson.sections)) {
-                        contentText = courseContentJson.sections.map(s => s.text || '').join(' ');
-                    } else if (typeof courseContentJson === 'string') {
-                        // If courseContent directly stores a string, use it.
-                        contentText = courseContentJson;
-                    }
-                    // Add more logic here if courseContent has a different or more complex structure
-                    // e.g., if it's an array of paragraphs, just join them.
-                }
+                const contentText = extractTextFromCourseContent(row[COURSE_TEXT_COLUMN]);
 
                 if (!contentText.trim()) {
                     console.warn(`Skipping embedding for course ID ${courseId} as its content is empty.`);
                     continue; // Skip if no meaningful text
                 }
 
-                const embedding = await this._getEmbedding(contentText);
-                await client.query(
-                    `UPDATE ${COURSE_TABLE_NAME} SET ${COURSE_EMBEDDING_COLUMN} = $1 WHERE ${COURSE_ID_COLUMN} = $2;`,
-                    [JSON.stringify(embedding), courseId]
-                );
-                process.stdout.write('.'); // Show progress
+                // Add 2-second delay to avoid 429 rate limit
+                await new Promise(resolve => setTimeout(resolve, 2000));
+
+                try {
+                    const embedding = await this._getEmbeddingWithRetry(contentText);
+                    await client.query(
+                        `UPDATE "${COURSE_TABLE_NAME}" SET "${COURSE_EMBEDDING_COLUMN}" = $1 WHERE "${COURSE_ID_COLUMN}" = $2;`,
+                        [JSON.stringify(embedding), courseId]
+                    );
+                    process.stdout.write('.'); // Show progress
+                } catch (err) {
+                    console.error(`\nFailed to generate embedding for course ID ${courseId}:`, err.message);
+                }
             }
             console.log("\nCourse embeddings generation/update complete.");
         } finally {
@@ -132,31 +169,29 @@ class RAGChatbot {
     }
 
     // This method will now retrieve from the 'courses' table
-    async _retrieveRelevantContent(query, numResults = 3) {
-        const queryEmbedding = await this._getEmbedding(query);
+    async _retrieveRelevantContent(query, courseId, numResults = 3) {
+        const queryEmbedding = await this._getEmbeddingWithRetry(query);
         const client = await this.pool.connect();
         try {
-            const res = await client.query(
-                `SELECT ${COURSE_ID_COLUMN}, ${COURSE_TEXT_COLUMN} 
-                 FROM ${COURSE_TABLE_NAME} 
-                 WHERE ${COURSE_EMBEDDING_COLUMN} IS NOT NULL 
-                 ORDER BY ${COURSE_EMBEDDING_COLUMN} <=> $1 
-                 LIMIT $2;`,
-                [JSON.stringify(queryEmbedding), numResults]
-            );
+            let queryStr = `
+                SELECT "${COURSE_ID_COLUMN}", "${COURSE_TEXT_COLUMN}" 
+                FROM "${COURSE_TABLE_NAME}" 
+                WHERE "${COURSE_EMBEDDING_COLUMN}" IS NOT NULL`;
+            
+            const params = [JSON.stringify(queryEmbedding), numResults];
+            
+            if (courseId) {
+                queryStr += ` AND "${COURSE_ID_COLUMN}" = $3`;
+                params.push(courseId);
+            }
+            
+            queryStr += ` ORDER BY ("${COURSE_EMBEDDING_COLUMN}"::text)::vector <=> $1::vector LIMIT $2;`;
+
+            const res = await client.query(queryStr, params);
+            
             // Return the full content object (or just the text part)
             return res.rows.map(row => {
-                let contentText = '';
-                if (row[COURSE_TEXT_COLUMN]) {
-                    const courseContentJson = row[COURSE_TEXT_COLUMN];
-                    if (courseContentJson.sections && Array.isArray(courseContentJson.sections)) {
-                        contentText = courseContentJson.sections.map(s => s.text || '').join(' ');
-                    } else if (typeof courseContentJson === 'string') {
-                        contentText = courseContentJson;
-                    }
-                    // ... same logic as ingestion for extracting text ...
-                }
-                return contentText; // Return just the extracted text for the RAG prompt
+                return extractTextFromCourseContent(row[COURSE_TEXT_COLUMN]);
             });
         } finally {
             client.release();
@@ -189,13 +224,12 @@ class RAGChatbot {
         return prompt;
     }
 
-    async chat(userQuestion) {
-        // ... (Chat logic remains largely the same) ...
+    async chat(userQuestion, courseId, history = []) {
         try {
             console.log(`User query: "${userQuestion}"`);
 
             // 1. Retrieve relevant content from PostgreSQL
-            const contextChunks = await this._retrieveRelevantContent(userQuestion);
+            const contextChunks = await this._retrieveRelevantContent(userQuestion, courseId);
             if (contextChunks.filter(Boolean).length === 0) { // Check if there's any actual content after filtering
                 return "I couldn't find any relevant course information in my knowledge base for that question. Please try rephrasing or check a different course.";
             }

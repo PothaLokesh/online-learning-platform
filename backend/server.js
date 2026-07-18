@@ -18,9 +18,7 @@ async function initializeChatbot() {
     chatbot = new RAGChatbot();
     try {
         await chatbot._ensurePgVectorExtension(); // backend and chatbot updation
-        // backend and chatbot updation
-        await chatbot.ingestContentEmbeddings();
-        console.log("backend and chatbot updation");
+        console.log("Chatbot initialized.");
     } catch (error) {
         console.error("backend and chatbot updation", error);
         process.exit(1); // backend and chatbot updation
@@ -28,17 +26,15 @@ async function initializeChatbot() {
 }
 
 // backend and chatbot updation
-
-// backend and chatbot updation
 app.post('/api/chat', async (req, res) => {
-    const { question } = req.body;
+    const { question, courseId, history } = req.body;
 
     if (!question) {
         return res.status(400).json({ error: "Question is required." });
     }
 
     try {
-        const response = await chatbot.chat(question);
+        const response = await chatbot.chat(question, courseId, history);
         res.json({ answer: response });
     } catch (error) {
         console.error("backend and chatbot updation", error);

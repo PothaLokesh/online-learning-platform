@@ -1,7 +1,6 @@
 import {db} from "@/config/db";
 import {coursesTable,usersTable} from "@/config/schema";
 import { currentUser } from "@clerk/nextjs/server";
-import { SqlTemplate } from "@neondatabase/serverless";
 import { sql } from "drizzle-orm";
 import {eq,desc, ne} from "drizzle-orm";
 import { SquareScissors } from "lucide-react";
@@ -18,7 +17,7 @@ export async function GET(req){
     const user=await currentUser();
     if(courseId==0){
        const result=await db.select().from(coursesTable)
-       .where(sql`${coursesTable.courseContent}::jsonb = '{}'::jsonb`);
+       .where(sql`${coursesTable.courseContent}::jsonb != '{}'::jsonb`);
 
 
            console.log(result);

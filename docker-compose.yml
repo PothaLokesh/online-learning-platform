@@ -1,0 +1,73 @@
+version: '3.8'
+
+services:
+  # 1. Vector database service
+  db:
+    image: pgvector/pgvector:pg16  # Pre-packaged PostgreSQL + pgvector
+    container_name: learning-platform-db
+    restart: always
+    environment:
+      POSTGRES_DB: learning_platform
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: your_secure_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    networks:
+      - app-network
+
+  # 2. Express Backend service
+  backend:
+    build:
+      context: ./backend
+    restart: always
+    volumes:
+      - ./backend:/usr/src/app
+      - /usr/src/app/node_modules
+    env_file:
+      - ./backend/.env
+    depends_on:
+      - db
+    networks:
+      - app-network
+
+  # 3. Next.js Frontend service
+  frontend:
+    build:
+      context: .
+    container_name: learning-platform-frontend
+    restart: always
+    volumes:
+      - .:/app
+      - /app/node_modules
+      - /app/.next
+    env_file:
+      - .env
+    depends_on:
+      - db
+      - backend
+    networks:
+      - app-network
+
+  # 4. Nginx Reverse Proxy / Load Balancer
+  nginx:
+    image: nginx:alpine
+    container_name: learning-platform-nginx
+    restart: always
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - frontend
+      - backend
+    networks:
+      - app-network
+
+volumes:
+  pgdata:
+
+networks:
+  app-network:
+    driver: bridge

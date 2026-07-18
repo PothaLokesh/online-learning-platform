@@ -25,8 +25,9 @@ function ChatbotWidget({ courseId, isMobile = false, onClose }) {
                 { role: "model", parts: [{ text: chat.answer }] }
             ]);
 
-            const response = await axios.post('/api/chatbot', {
+            const response = await axios.post('/api/chat', {
                 question: question.trim(),
+                courseId: courseId,
                 history: history
             });
 
