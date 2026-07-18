@@ -46,7 +46,7 @@ jobs:
           push: false # Do not push to registry during CI check
           # Pass dummy environment variables so Next.js can compile successfully during CI
           build-args: |
-            NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_test_mock
+            NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_test_Y29udGVudC1iZWFnbGUtMTAuY2xlcmsuYWNjb3VudHMuZGV2JA
             CLERK_SECRET_KEY=sk_test_mock
             NEXT_PUBLIC_DATABASE_URL=postgresql://mock:mock@localhost:5432/mock
             DATABASE_URL=postgresql://mock:mock@localhost:5432/mock
